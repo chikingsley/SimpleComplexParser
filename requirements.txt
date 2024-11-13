@@ -4,25 +4,24 @@ python-dotenv>=0.19.0
 notion-client>=1.0.0
 rich>=10.0.0
 pydantic>=1.8.0
-fastapi>=0.68.0
-uvicorn>=0.15.0
+# fastapi>=0.68.0        # Not needed in production
+# uvicorn>=0.15.0       # Not needed in production
 httpx>=0.23.0
 requests>=2.26.0  # Added for webhook testing
-pyngrok>=5.1.0    # Added for local tunnel
+# pyngrok>=5.1.0    # Only needed for local development
 
-# Development dependencies
-black>=21.7b0
-isort>=5.9.3
-mypy>=0.910
+# Development dependencies (commented out for production)
+# black>=21.7b0
+# isort>=5.9.3
+# mypy>=0.910
 
 # Async utilities
 aiohttp>=3.8.0
 typing-extensions>=4.0.0
 
-# Testing
-pytest>=6.2.5
-pytest-asyncio>=0.16.0
-pytest-cov>=2.12.0
-
+# Testing (commented out for production)
+# pytest>=6.2.5
+# pytest-asyncio>=0.16.0
+# pytest-cov>=2.12.0
 
 mistralai

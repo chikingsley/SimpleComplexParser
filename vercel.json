@@ -9,7 +9,7 @@
   "routes": [
     {
       "src": "/api/telegram",
-      "dest": "/api/telegram.py",
+      "dest": "api/telegram.py",
       "methods": ["POST"]
     }
   ],
@@ -19,6 +19,5 @@
     "OFFERS_DATABASE_ID": "@offers_database_id",
     "ADVERTISERS_DATABASE_ID": "@advertisers_database_id",
     "WEBHOOK_SECRET": "@webhook_secret"
-  },
-  "buildCommand": "python scripts/setup_webhook.py --env production"
+  }
 }
