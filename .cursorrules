@@ -1,0 +1,240 @@
+You are an expert in Python application development with deep knowledge in:
+- Telegram bot development (python-telegram)
+- Notion API integration (notion-client)
+- FastAPI development and testing
+- Asynchronous Python programming
+- Vercel deployment architecture
+
+## CRITICAL PRINCIPLES - READ FIRST
+1. **Preserve Existing Functionality**
+   - NEVER modify existing functionality without thorough code review
+   - Document and test all behavior before making changes
+   - Always verify dependencies and side effects before modification
+   - If unsure about a component's purpose, STOP and ask
+
+2. **Integration Strategy**
+   - Prefer small, incremental changes over large refactors
+   - Document all integration points between systems
+   - Maintain separate concerns while combining codebases
+   - Create comprehensive tests for integrated functionality
+
+3. **Change Management**
+   - All major architectural changes require explicit approval
+   - Document every modification with clear reasoning
+   - Maintain a changelog of all integrations
+   - Create migration plans for any breaking changes
+
+## Technical Stack Specifications
+
+### Core Dependencies
+```
+Primary:
+- python-telegram
+- notion-client
+- rich
+- pydantic
+- fastapi
+- uvicorn
+- pyngrok
+- typing-extensions
+- aiohttp
+- httpx (for testing)
+
+Development:
+- pytest
+- black
+- isort
+- mypy
+```
+
+### Version Control and Compatibility
+- Python version: 3.9+ (Vercel compatibility)
+- Use strict typing throughout
+- Maintain package version lock files
+- Document all version constraints
+
+## Code Organization and Structure
+
+### Project Layout
+```
+project_root/
+├── app/
+│   ├── core/           # Shared core functionality
+│   ├── telegram/       # Telegram bot specific code
+│   ├── notion/         # Notion integration specific code
+│   ├── api/           # FastAPI routes and handlers
+│   └── utils/         # Shared utilities
+├── tests/
+│   ├── integration/   # Integration tests
+│   └── unit/         # Unit tests
+└── config/           # Configuration management
+```
+
+### Module Integration Guidelines
+1. Keep original module structure where possible
+2. Create clear interfaces between systems
+3. Use dependency injection for service integration
+4. Maintain separate configuration for each component
+
+## Error Handling and Validation
+
+### Error Management Strategy
+- Preserve existing error handling patterns
+- Add structured logging for integration points
+- Implement global error tracking
+- Create error boundary between systems
+
+### Validation Rules
+- Use Pydantic for all data validation
+- Maintain existing validation patterns
+- Add integration validation layers
+- Implement strict type checking
+
+## Asynchronous Programming Guidelines
+
+### Async Patterns
+```python
+# Preferred pattern for async operations
+async def integrated_operation():
+    try:
+        # Preserve existing async context
+        async with AsyncClient() as client:
+            result = await existing_operation()
+            return await new_integration(result)
+    except IntegrationException:
+        # Add structured logging
+        logger.error("Integration failed", exc_info=True)
+        raise
+```
+
+### Async Best Practices
+1. Use consistent async patterns across modules
+2. Maintain existing async contexts
+3. Properly handle async cleanup
+4. Implement proper timeout handling
+
+## Testing Requirements
+
+### Testing Strategy
+- Maintain existing test coverage
+- Add integration tests for new connections
+- Use HTTPX for async HTTP testing
+- Implement API simulation for Telegram/Notion
+
+### Test Categories
+1. Unit tests for individual components
+2. Integration tests for system connections
+3. End-to-end tests for critical paths
+4. Performance tests for integrated systems
+
+## Development Workflow
+
+### Change Process
+1. Document existing functionality
+2. Create integration test plan
+3. Implement minimal required changes
+4. Verify all existing tests pass
+5. Add new integration tests
+6. Deploy to staging environment
+7. Verify in production-like environment
+
+### Code Review Requirements
+- Verify existing functionality preservation
+- Check for integration side effects
+- Validate error handling
+- Confirm test coverage
+- Review performance impact
+
+## Performance Guidelines
+
+### Integration Performance
+- Monitor response times at integration points
+- Implement caching where appropriate
+- Use connection pooling for external services
+- Monitor memory usage during integration
+
+### Optimization Rules
+1. Profile before optimizing
+2. Document performance baselines
+3. Monitor integration overhead
+4. Implement appropriate caching
+
+## Vercel Deployment Considerations
+
+### Deployment Requirements
+- Function size limits
+- Execution time constraints
+- Environment variable management
+- Serverless function optimization
+
+### Deployment Process
+1. Verify local functionality
+2. Test in staging environment
+3. Validate serverless constraints
+4. Deploy with monitoring
+
+## Security and Authentication
+
+### Security Requirements
+- Maintain existing security patterns
+- Implement secure integration patterns
+- Use environment variables for secrets
+- Implement proper rate limiting
+
+### Authentication Flow
+1. Preserve existing auth mechanisms
+2. Add integration authentication
+3. Implement proper token handling
+4. Maintain security contexts
+
+## Documentation Requirements
+
+### Required Documentation
+1. Integration points and interfaces
+2. Configuration changes
+3. Error handling patterns
+4. Deployment procedures
+5. Testing requirements
+
+### Code Documentation
+- Document all integration functions
+- Maintain existing documentation
+- Add integration examples
+- Update API documentation
+
+## Key Development Conventions
+
+1. Always preserve existing functionality first
+2. Document thoroughly before changing
+3. Test extensively after integration
+4. Use consistent async patterns
+5. Implement proper error boundaries
+6. Maintain separate configurations
+7. Version control all changes
+8. Monitor performance impacts
+9. Follow security best practices
+10. Keep deployment constraints in mind
+
+## Before Making Changes
+
+### Pre-Change Checklist
+1. [ ] Understand existing functionality completely
+2. [ ] Document current behavior
+3. [ ] Create test coverage
+4. [ ] Plan minimal required changes
+5. [ ] Get approval for significant changes
+6. [ ] Verify all dependencies
+7. [ ] Check for similar implementations
+8. [ ] Create rollback plan
+
+### Integration Checklist
+1. [ ] Verify existing tests pass
+2. [ ] Add integration tests
+3. [ ] Check performance impact
+4. [ ] Validate error handling
+5. [ ] Test deployment constraints
+6. [ ] Document changes
+7. [ ] Review security implications
+8. [ ] Update documentation
+
+Remember: The primary goal is to maintain existing functionality while safely integrating the systems. When in doubt, ask for clarification rather than making assumptions.
