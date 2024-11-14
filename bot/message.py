@@ -73,17 +73,23 @@ class MessageHandler:
         deduction_formatted = (f"{round(parsed_data.get('deduction_limit', 0)*100, 2):.0f}%" 
                              if parsed_data.get('deduction_limit') else 'N/A')
         
+        # Helper function to check for empty values
+        def check_field(value, field_name):
+            if not value or value == "None" or (isinstance(value, list) and not value):
+                return f"N/A - check🚨"
+            return value
+        
         return (
             f"{status_emoji} Deal {index} of {total}\n\n"
             f"📝 Original Text:\n{raw_text}\n\n"
             f"📊 Deal Details:\n"
             f"━━━━━━━━━━━━━━━\n"
-            f"🤝 Partner: {parsed_data.get('partner', 'N/A - check🚨')}\n"
+            f"🤝 Partner: {check_field(parsed_data.get('partner'), 'partner')}\n"
             f"🌍 Region: {parsed_data.get('region', 'N/A')}\n"
-            f"🗺 GEO: {parsed_data.get('geo', 'N/A - check🚨')}\n"
-            f"🗣 Language: {parsed_data.get('language', 'Native')}\n"
+            f"🗺 GEO: {check_field(parsed_data.get('geo'), 'geo')}\n"
+            f"🗣 Language: {check_field(parsed_data.get('language'), 'language')}\n"
             f"━━━━━━━━━━━━━━━\n"
-            f"📱 Source: {parsed_data.get('source', 'N/A - check🚨')}\n"
+            f"📱 Source: {check_field(parsed_data.get('source'), 'source')}\n"
             f"💰 Pricing Model: {parsed_data.get('pricing_model', 'N/A')}\n"
             f"💵 CPA: {parsed_data.get('cpa', 'N/A')}\n"
             f"📈 CRG: {crg_formatted}\n"
