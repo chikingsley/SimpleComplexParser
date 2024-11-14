@@ -131,3 +131,11 @@ async def telegram_webhook(request: Request):
 async def health_check():
     """Basic health check endpoint"""
     return {"status": "healthy"}
+
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "bot": "@kitchenadsconfirms_bot",
+        "version": "1.0.0"
+    }
