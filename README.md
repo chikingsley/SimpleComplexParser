@@ -1,158 +1,91 @@
-# Deal Parser Bot
+# Telegram Bot
 
-A Telegram bot that handles both formatted and unformatted deal submissions with Notion integration.
+A Telegram bot built with Python, FastAPI, and python-telegram-bot.
 
-## Features
+## Deployment to Render
 
-- Handles two types of deal formats:
-  - Formatted: `TIER1-Partner-GEO-Language-Source-Model-CPA-CRG-CPL-Funnels-CR-Deduction`
-  - Unformatted: Natural language deal descriptions
-- Notion integration for deal storage
-- Interactive deal editing and validation
-- Webhook support for production deployment
+### Prerequisites
 
-## Local Development Setup
+1. Create a Telegram bot and get your bot token from [@BotFather](https://t.me/botfather)
+2. Create a [Render account](https://render.com)
+3. Fork/clone this repository
 
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd deal-parser-bot
-```
+### Deployment Steps
 
-2. **Create and activate virtual environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+1. **Create New Web Service**
+   - Go to Render Dashboard
+   - Click "New +" and select "Web Service"
+   - Connect your repository
+   - Choose the branch to deploy
 
-3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
+2. **Configure Environment Variables**
+   
+   Add the following environment variables in Render dashboard:
+   ```
+   TELEGRAM_BOT_TOKEN=your_bot_token
+   WEBHOOK_SECRET=generate_random_secret_here
+   WEBHOOK_URL=https://your-app-name.onrender.com
+   ENVIRONMENT=production
+   ```
 
-4. **Set up environment variables**
-Create a `.env` file in the project root:
-```env
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-NOTION_TOKEN=your_notion_token
-OFFERS_DATABASE_ID=your_offers_database_id
-ADVERTISERS_DATABASE_ID=your_advertisers_database_id
-WEBHOOK_SECRET=your_webhook_secret
-```
+3. **Deploy Settings**
+   - Name: Choose a name for your service
+   - Runtime: Python
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn api.telegram:app --host 0.0.0.0 --port $PORT`
+   - Select "Auto-Deploy: Yes"
 
-5. **Run local webhook server**
-```bash
-# Install ngrok if not already installed
-pip install pyngrok
+4. **Verify Deployment**
+   - Wait for deployment to complete
+   - Visit `https://your-app-name.onrender.com/health`
+   - Should return `{"status": "healthy"}`
 
-# Start webhook server
-python scripts/test_webhook.py
-python scripts/tunnel.py
-```
+5. **Set Up Telegram Webhook**
+   - The webhook will be automatically set during application startup
+   - Verify webhook status by sending a message to your bot
+   - Check logs in Render dashboard for any issues
 
-The bot will be available through the ngrok URL displayed in the console.
+### Development
 
-## Production Deployment (Vercel)
+1. Clone the repository
+2. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Create `.env` file:
+   ```
+   TELEGRAM_BOT_TOKEN=your_bot_token
+   ENVIRONMENT=development
+   ```
+5. Run locally:
+   ```bash
+   uvicorn api.telegram:app --reload
+   ```
 
-1. **Install Vercel CLI**
-```bash
-npm install -g vercel
-```
+### Monitoring and Logs
 
-2. **Configure Vercel environment variables**
-```bash
-vercel env add TELEGRAM_BOT_TOKEN
-vercel env add NOTION_TOKEN
-vercel env add OFFERS_DATABASE_ID
-vercel env add ADVERTISERS_DATABASE_ID
-vercel env add WEBHOOK_SECRET
-```
+- Monitor your application through Render dashboard
+- View logs: Render Dashboard → Your Service → Logs
+- Set up alerts for errors and downtime
 
-3. **Deploy to Vercel**
-```bash
-vercel
-```
-
-The webhook will be automatically configured during deployment.
-
-## Project Structure
-
-```
-project_root/
-├── api/
-│   └── telegram.py      # Webhook handler
-├── bot/
-│   ├── router.py        # Message router
-│   ├── client.py        # Deal parsing client
-│   └── message.py       # Message handling
-├── scripts/
-│   ├── setup_webhook.py # Webhook configuration
-│   └── test_webhook.py  # Local testing
-├── main.py             # Main bot application
-├── main_simple.py      # Simple deal flow
-└── main_complex.py     # Complex deal flow
-```
-
-## Testing
-
-1. **Local Testing**
-```bash
-# Start local webhook server
-python scripts/test_webhook.py
-
-# In another terminal, send test messages to your bot
-```
-
-2. **Production Testing**
-After deployment, send messages to your bot on Telegram.
-
-## Webhook Management
-
-- **Set up local webhook:**
-```bash
-python scripts/setup_webhook.py --env local
-```
-
-- **Set up production webhook:**
-```bash
-python scripts/setup_webhook.py --env production
-```
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| TELEGRAM_BOT_TOKEN | Your Telegram bot token from BotFather |
-| NOTION_TOKEN | Notion integration token |
-| OFFERS_DATABASE_ID | Notion database ID for offers |
-| ADVERTISERS_DATABASE_ID | Notion database ID for advertisers |
-| WEBHOOK_SECRET | Secret token for webhook verification |
-
-## Troubleshooting
+### Troubleshooting
 
 1. **Webhook Issues**
-   - Check webhook status: `https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo`
-   - Verify webhook URL is accessible
-   - Check webhook secret matches
+   - Check WEBHOOK_URL is correct
+   - Verify WEBHOOK_SECRET is set
+   - Check logs for webhook-related errors
 
-2. **Notion Integration**
-   - Verify database permissions
-   - Check integration token access
-   - Validate database structure
+2. **Application Errors**
+   - Review Render logs
+   - Verify all environment variables are set
+   - Check application logs for specific error messages
 
-3. **Local Development**
-   - Ensure ngrok is running
-   - Verify environment variables
-   - Check FastAPI server logs
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
+3. **Bot Not Responding**
+   - Verify bot token is correct
+   - Check webhook status using Telegram API
+   - Ensure application health check passes

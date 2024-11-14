@@ -14,13 +14,13 @@ import logging
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG  # Set to DEBUG for more verbose logging
+    level=logging.INFO if os.getenv('ENVIRONMENT') == 'production' else logging.DEBUG
 )
 logger = logging.getLogger(__name__)
 
 # Initialize components
-app = FastAPI()
-bot = MainBot()  # Creates both simple and complex bots
+app = FastAPI(title="Telegram Bot API")
+bot = MainBot()
 application = None
 
 @app.on_event("startup")
@@ -45,9 +45,23 @@ async def startup_event():
             bot.handle_message
         ))
         
+        # Initialize and start the application
         await application.initialize()
-        await application.start()
         
+        # Set webhook in production
+        if os.getenv('ENVIRONMENT') == 'production':
+            webhook_url = os.getenv('WEBHOOK_URL')
+            if webhook_url:
+                webhook_secret = os.getenv('WEBHOOK_SECRET')
+                await application.bot.set_webhook(
+                    url=f"{webhook_url}/api/telegram",
+                    secret_token=webhook_secret
+                )
+                logger.info(f"Webhook set to {webhook_url}/api/telegram")
+            else:
+                logger.error("WEBHOOK_URL not found in environment variables")
+        
+        await application.start()
         logger.info("Bot application initialized successfully")
         
     except Exception as e:
