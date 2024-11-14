@@ -64,7 +64,15 @@ class MessageHandler:
             funnels = []
             
         raw_text = deal.get('raw_text', '')
-            
+        
+        # Format CRG, CR, and Deduction Limit separately for clarity
+        crg_formatted = (f"{round(parsed_data.get('crg', 0)*100, 2):.0f}%" 
+                        if parsed_data.get('crg') else 'N/A')
+        cr_formatted = (f"{round(parsed_data.get('cr', 0)*100, 2):.0f}%" 
+                       if parsed_data.get('cr') else 'N/A')
+        deduction_formatted = (f"{round(parsed_data.get('deduction_limit', 0)*100, 2):.0f}%" 
+                             if parsed_data.get('deduction_limit') else 'N/A')
+        
         return (
             f"{status_emoji} Deal {index} of {total}\n\n"
             f"📝 Original Text:\n{raw_text}\n\n"
@@ -78,12 +86,12 @@ class MessageHandler:
             f"📱 Source: {parsed_data.get('source', 'N/A')}\n"
             f"💰 Pricing Model: {parsed_data.get('pricing_model', 'N/A')}\n"
             f"💵 CPA: {parsed_data.get('cpa', 'N/A')}\n"
-            f"📈 CRG: {f'{round(parsed_data.get('crg')*100, 2):.0f}%' if parsed_data.get('crg') else 'N/A'}\n"
+            f"📈 CRG: {crg_formatted}\n"
             f"🎯 CPL: {parsed_data.get('cpl', 'N/A')}\n"
             f"━━━━━━━━━━━━━━━\n"
             f"🔄 Funnels: {', '.join(funnels) if funnels else 'N/A'}\n"
-            f"📊 CR: {f'{round(parsed_data.get('cr')*100, 2):.0f}%' if parsed_data.get('cr') else 'N/A'}\n"
-            f"📉 Deduction Limit: {f'{round(parsed_data.get('deduction_limit')*100, 2):.0f}%' if parsed_data.get('deduction_limit') else 'N/A'}\n"
+            f"📊 CR: {cr_formatted}\n"
+            f"📉 Deduction Limit: {deduction_formatted}\n"
             f"━━━━━━━━━━━━━━━"
         )
 

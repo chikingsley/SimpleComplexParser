@@ -4,9 +4,8 @@ services:
     env: python
     buildCommand: |
       python -m pip install --upgrade pip
-      pip install uvicorn
       pip install -r requirements.txt
-    startCommand: python -m uvicorn api.telegram:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn api.telegram:app --host 0.0.0.0 --port $PORT
     autoscaling:
       min: 1
       max: 1
