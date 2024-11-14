@@ -89,3 +89,50 @@ A Telegram bot built with Python, FastAPI, and python-telegram-bot.
    - Verify bot token is correct
    - Check webhook status using Telegram API
    - Ensure application health check passes
+
+### Testing Deployment
+
+1. **Check Webhook Status**
+   ```bash
+   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
+   ```
+
+2. **Check Bot Status**
+   ```bash
+   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getMe"
+   ```
+
+3. **Check Health Endpoint**
+   ```bash
+   curl "https://your-app-name.onrender.com/health"
+   ```
+
+### Webhook Management
+
+1. **Set Webhook**
+   ```bash
+   curl -F "url=https://your-app-name.onrender.com/api/telegram" https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook
+   ```
+
+2. **Get Webhook Info**
+   ```bash
+   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
+   ```
+
+3. **Delete Webhook**
+   ```bash
+   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/deleteWebhook"
+   ```
+
+Replace `<YOUR_BOT_TOKEN>` with your actual bot token and `your-app-name` with your Render app name.
+
+### Deploy Hook
+
+To trigger a new deployment:
+```bash
+curl -X POST "https://api.render.com/deploy/srv-csqk5jbgbbvc738n3ha0?key=ESqc9cRv9Z8"
+```
+
+Note: Keep this URL secret as it can trigger deployments of your application.
+
+

@@ -117,10 +117,23 @@ class SimpleDealBot:
             raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Send a message when the command /start is issued."""
+        """Start the bot and show welcome message.
+        
+        Command: /start
+        Description: Initialize the bot and get instructions on how to submit deals.
+        Shows basic format requirements and examples for both standard and bulk submissions.
+        """
         welcome_message = (
             "👋 Hi! I'm the Deal Parser Bot.\n\n"
-            "Send me deal strings in this format:\n"
+            "I can help you submit deals! For standard submissions,\n"
+            "I prefer deals in the following format:\n"
+            "Partner:\n"
+            "GEO: (country codes)\n"
+            "Language:\n"
+            "Source:\n"
+            "Price:\n"
+            "Funnels\n\n"
+            "For bulk submission, send me deal strings in this format:\n"
             "REGION-PARTNER-GEO-LANGUAGE-SOURCE-MODEL-CPA-CRG-CPL-FUNNELS-CR-DEDUCTIONLIMIT\n\n"
             "Example:\n"
             "TIER1-FTD Company-UK|IE|NL-Native-Facebook|Google-cpa_crg-1200-0.10-&-QuantumAI-&-0.05"
@@ -128,22 +141,64 @@ class SimpleDealBot:
         await update.message.reply_text(welcome_message)
 
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Send a message when the command /help is issued."""
+        """Get help with deal requirements and pricing models.
+        
+        Command: /help
+        Description: View required fields and pricing model specifications.
+        Lists all mandatory fields and explains pricing model requirements.
+        """
         help_text = (
             "📝 Required Fields:\n"
-            "- Region (TIER1, LATAM, etc)\n"
             "- Partner name\n"
             "- GEO (country codes)\n"
             "- Language\n"
+            "- Price (CPA+CRG or CPL)\n"
             "- Source\n"
-            "- Pricing model (cpa_crg, cpa, cpl)\n"
             "- Funnels\n\n"
-            "Plus relevant pricing fields based on model:\n"
-            "- CPA/CRG: Both CPA and CRG required\n"
-            "- CPA only: CPA required\n"
-            "- CPL only: CPL required"
+            "🔎 Plus relevant pricing fields based on model:\n"
+            "- CPA/CRG: Both CPA and CRG required - usually parsed from price)\n"
+            "- CPA only: CPA required - usually parsed from price)\n"
+            "- CPL only: CPL required - usually parsed from price)\n"
+            "🤷🏾‍♂️ Optional fields:\n"
+            "- Region (TIER1, LATAM, etc) - usually parsed from GEO \n"
+            "- Pricing model (cpa_crg, cpa, cpl) - usually parsed from price\n"
+            "- CR\n"
+            "- Deduction limit\n"
         )
         await update.message.reply_text(help_text)
+
+    async def prompt(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """Get detailed formatting rules for bulk deal submission.
+        
+        Command: /prompt
+        Description: View complete formatting guide for bulk deal submissions.
+        Shows exact format, field rules, and examples for submitting multiple deals.
+        """
+        prompt_text = (
+            "*Prompt:*\n\n"
+            "Format deals as:\n"
+            "`[Region]-[Partner]-[GEO]-[Language]-[Source]-[Model]-[CPA]-[CRG]-[CPL]-[Funnels]-[CR]-[DeductionLimit]`\n\n"
+            "*Rules:*\n\n"
+            "1\\. *Region*: \"TIER1\" for AU, CA, US, \"LATAM\" for Latin America, \"NORDICS\" for DK, FI, SE, \"BALTICS\" for EE, LV, LT, \"TIER3\" for others\\.\n"
+            "2\\. *GEO*: Use ISO codes \\(e\\.g\\., US, FR\\); use `|` for multiple countries\\.\n"
+            "3\\. *Language*: Use \"Native\" if not specified\\.\n"
+            "4\\. *Source*: Standardize names \\(e\\.g\\., \"FB\" = Facebook\\)\\. Use `|` between multiple sources\\. Default to \"Facebook\" if none given\\.\n"
+            "5\\. *Model*: \"cpa\\_crg\" if CPA \\+ CRG given, \"cpa\" if only CPA, \"cpl\" if only CPL\\.\n"
+            "6\\. *CPA & CPL*: Whole numbers only; omit currency symbols\\.\n"
+            "7\\. *CRG*: Convert percentages to decimals \\(e\\.g\\., 10% = 0\\.10\\)\\.\n"
+            "8\\. *Funnels*: Exact names, separated by `|`\\.\n"
+            "9\\. *CR & Deduction Limit*: Use given values; `&` if missing\\. Treat \"until X% wrong number\" as deduction limit\\.\n\n"
+            "\\-\\-\\-\n\n"
+            "*Example:*\n"
+            "Input: `Partner: Acolyte GEO: UK CPA + CRG: 1250+13% Funnels: EvoPrimeX`\n"
+            "Output: `TIER1-Acolyte-UK-Native-Facebook-cpa_crg-1250-0.13-&-EvoPrimeX-&-0.05`"
+        )
+        
+        # Send message with markdown formatting
+        await update.message.reply_text(
+            prompt_text,
+            parse_mode='MarkdownV2'
+        )
 
     def parse_deal_string(self, deal_string: str) -> tuple[Deal, str]:
         """Parse a single deal string into a Deal object and return error message if any"""
@@ -399,7 +454,7 @@ class SimpleDealBot:
             summary += f"• Total Deals: {len(deal_strings)}\n"
             summary += f"• Successfully Processed: {len(valid_deals)}\n"
             summary += f"• Failed to Process: {len(invalid_deals)}\n"
-            summary += "━━━━━━━━━━━━━━━━\n\n"
+            summary += "━━━━━━��━━━━━━━━��\n\n"
 
             # Only add failed deals and their errors
             if invalid_deals:
@@ -424,6 +479,7 @@ class SimpleDealBot:
         # Add command handlers
         application.add_handler(CommandHandler("start", self.start))
         application.add_handler(CommandHandler("help", self.help_command))
+        application.add_handler(CommandHandler("prompt", self.prompt))
 
         # Add message handler
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
