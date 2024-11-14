@@ -8,7 +8,6 @@ fastapi>=0.100.0
 uvicorn>=0.23.0
 httpx>=0.24.0
 requests>=2.31.0
-# pyngrok>=5.1.0    # Only needed for local development
 
 # Async utilities
 aiohttp>=3.8.0
@@ -17,12 +16,10 @@ typing-extensions>=4.7.0
 # AI Integration
 mistralai>=0.0.7
 
-# Development dependencies (commented out for production)
+# Development dependencies
 # black>=21.7b0
 # isort>=5.9.3
 # mypy>=0.910
-
-# Testing (commented out for production)
 # pytest>=6.2.5
 # pytest-asyncio>=0.16.0
 # pytest-cov>=2.12.0

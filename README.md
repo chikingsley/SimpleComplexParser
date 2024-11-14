@@ -2,137 +2,100 @@
 
 A Telegram bot built with Python, FastAPI, and python-telegram-bot.
 
-## Deployment to Render
+## Local Deployment with Docker
 
 ### Prerequisites
 
 1. Create a Telegram bot and get your bot token from [@BotFather](https://t.me/botfather)
-2. Create a [Render account](https://render.com)
-3. Fork/clone this repository
+2. Install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
+3. Install [Node.js](https://nodejs.org/) (for localtunnel)
+4. Install localtunnel: `npm install -g localtunnel`
+
+### Environment Setup
+
+Create a `.env` file:
+```
+TELEGRAM_BOT_TOKEN=your_bot_token
+NOTION_TOKEN=your_notion_token
+OFFERS_DATABASE_ID=your_offers_db_id
+ADVERTISERS_DATABASE_ID=your_advertisers_db_id
+WEBHOOK_SECRET=your_webhook_secret
+```
 
 ### Deployment Steps
 
-1. **Create New Web Service**
-   - Go to Render Dashboard
-   - Click "New +" and select "Web Service"
-   - Connect your repository
-   - Choose the branch to deploy
+1. **Build and Start Docker Container**
+```bash
+docker-compose up --build
+```
 
-2. **Configure Environment Variables**
-   
-   Add the following environment variables in Render dashboard:
-   ```
-   TELEGRAM_BOT_TOKEN=your_bot_token
-   WEBHOOK_SECRET=generate_random_secret_here
-   WEBHOOK_URL=https://your-app-name.onrender.com
-   ENVIRONMENT=production
-   ```
+2. **Start Localtunnel in Another Terminal**
+```bash
+python scripts/start_local.py
+```
 
-3. **Deploy Settings**
-   - Name: Choose a name for your service
-   - Runtime: Python
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `uvicorn api.telegram:app --host 0.0.0.0 --port $PORT`
-   - Select "Auto-Deploy: Yes"
-
-4. **Verify Deployment**
-   - Wait for deployment to complete
-   - Visit `https://your-app-name.onrender.com/health`
-   - Should return `{"status": "healthy"}`
-
-5. **Set Up Telegram Webhook**
-   - The webhook will be automatically set during application startup
-   - Verify webhook status by sending a message to your bot
-   - Check logs in Render dashboard for any issues
+3. **Verify Deployment**
+- Check the localtunnel URL in the console
+- Send a message to your bot
+- Check Docker logs for incoming requests
 
 ### Development
 
-1. Clone the repository
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Create `.env` file:
-   ```
-   TELEGRAM_BOT_TOKEN=your_bot_token
-   ENVIRONMENT=development
-   ```
-5. Run locally:
-   ```bash
-   uvicorn api.telegram:app --reload
-   ```
+1. **Run Without Docker**
+```bash
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-### Monitoring and Logs
+# Install dependencies
+pip install -r requirements.txt
 
-- Monitor your application through Render dashboard
-- View logs: Render Dashboard → Your Service → Logs
-- Set up alerts for errors and downtime
+# Start the bot
+python scripts/start_local.py
+```
+
+2. **Run with Docker**
+```bash
+# Start services
+docker-compose up
+
+# View logs
+docker-compose logs -f
+
+# Rebuild after changes
+docker-compose up --build
+```
 
 ### Troubleshooting
 
 1. **Webhook Issues**
-   - Check WEBHOOK_URL is correct
-   - Verify WEBHOOK_SECRET is set
-   - Check logs for webhook-related errors
-
-2. **Application Errors**
-   - Review Render logs
-   - Verify all environment variables are set
-   - Check application logs for specific error messages
-
-3. **Bot Not Responding**
-   - Verify bot token is correct
-   - Check webhook status using Telegram API
-   - Ensure application health check passes
-
-### Testing Deployment
-
-1. **Check Webhook Status**
-   ```bash
-   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
-   ```
-
-2. **Check Bot Status**
-   ```bash
-   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getMe"
-   ```
-
-3. **Check Health Endpoint**
-   ```bash
-   curl "https://your-app-name.onrender.com/health"
-   ```
-
-### Webhook Management
-
-1. **Set Webhook**
-   ```bash
-   curl -F "url=https://your-app-name.onrender.com/api/telegram" https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook
-   ```
-
-2. **Get Webhook Info**
-   ```bash
-   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
-   ```
-
-3. **Delete Webhook**
-   ```bash
-   curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/deleteWebhook"
-   ```
-
-Replace `<YOUR_BOT_TOKEN>` with your actual bot token and `your-app-name` with your Render app name.
-
-### Deploy Hook
-
-To trigger a new deployment:
 ```bash
-curl -X POST "https://api.render.com/deploy/srv-csqk5jbgbbvc738n3ha0?key=ESqc9cRv9Z8"
+# Check webhook status
+curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo"
+
+# Delete webhook
+curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/deleteWebhook"
 ```
 
-Note: Keep this URL secret as it can trigger deployments of your application.
+2. **Container Issues**
+```bash
+# Check container logs
+docker-compose logs
+
+# Restart containers
+docker-compose restart
+
+# Rebuild containers
+docker-compose up --build
+```
+
+3. **Localtunnel Issues**
+```bash
+# Kill existing localtunnel
+pkill -f "lt --port"
+
+# Restart localtunnel
+python scripts/start_local.py
+```
 
 

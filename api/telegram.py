@@ -35,11 +35,9 @@ async def startup_event():
         # Build application
         application = Application.builder().token(token).build()
         
-        # Add command handlers
+        # Add handlers
         application.add_handler(CommandHandler("start", bot.simple_bot.start))
         application.add_handler(CommandHandler("help", bot.simple_bot.help_command))
-        
-        # Add message handler that handles both text and callbacks
         application.add_handler(MessageHandler(
             filters.TEXT | filters.COMMAND | filters.StatusUpdate.ALL, 
             bot.handle_message
@@ -47,20 +45,6 @@ async def startup_event():
         
         # Initialize and start the application
         await application.initialize()
-        
-        # Set webhook in production
-        if os.getenv('ENVIRONMENT') == 'production':
-            webhook_url = os.getenv('WEBHOOK_URL')
-            if webhook_url:
-                webhook_secret = os.getenv('WEBHOOK_SECRET')
-                await application.bot.set_webhook(
-                    url=f"{webhook_url}/api/telegram",
-                    secret_token=webhook_secret
-                )
-                logger.info(f"Webhook set to {webhook_url}/api/telegram")
-            else:
-                logger.error("WEBHOOK_URL not found in environment variables")
-        
         await application.start()
         logger.info("Bot application initialized successfully")
         
@@ -86,24 +70,24 @@ async def telegram_webhook(request: Request):
     """Handle incoming webhook requests from Telegram"""
     try:
         # Log incoming request
-        logger.debug("Received webhook request")
+        logger.info("Received webhook request")
         
         # Verify webhook secret if configured
         webhook_secret = os.getenv("WEBHOOK_SECRET")
         if webhook_secret:
             secret_header = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
-            logger.debug(f"Checking webhook secret. Expected: {webhook_secret}, Received: {secret_header}")
+            logger.info(f"Webhook secret check - Expected: {webhook_secret}, Received: {secret_header}")
             if secret_header != webhook_secret:
                 logger.warning("Unauthorized webhook request - secret mismatch")
                 return Response(status_code=403, content="Unauthorized")
         
         # Get update data
         update_data = await request.json()
-        logger.debug(f"Received update data: {update_data}")
+        logger.info(f"Received update data: {update_data}")
         
         # Create Update object
         update = Update.de_json(update_data, application.bot)
-        logger.debug(f"Created Update object: {update}")
+        logger.info(f"Created Update object: {update}")
         
         # Handle update based on type
         if update.callback_query:
@@ -119,7 +103,7 @@ async def telegram_webhook(request: Request):
             logger.debug("Processing regular message")
             await application.process_update(update)
         
-        logger.debug("Update processed successfully")
+        logger.info("Update processed successfully")
         return Response(status_code=200, content="ok")
         
     except Exception as e:
