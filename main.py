@@ -55,21 +55,16 @@ class MainBot:
 
     def run(self):
         """Start the bot."""
-        token = os.getenv("TELEGRAM_BOT_TOKEN")
-        if not token:
-            logger.error("No TELEGRAM_BOT_TOKEN found in environment variables")
-            return
-
-        # Create application
-        application = Application.builder().token(token).build()
+        # Create application and add handlers
+        application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
         # Add handlers
         application.add_handler(CommandHandler("start", self.simple_bot.start))
         application.add_handler(CommandHandler("help", self.simple_bot.help_command))
+        application.add_handler(CommandHandler("prompt", self.simple_bot.prompt))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
 
-        # Start the bot
-        logger.info("Starting bot...")
+        # Start polling
         application.run_polling()
 
 if __name__ == '__main__':

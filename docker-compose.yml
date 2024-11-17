@@ -1,0 +1,11 @@
+services:
+  bot:
+    build: .
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
+      - OFFERS_DATABASE_ID=${OFFERS_DATABASE_ID}
+      - ADVERTISERS_DATABASE_ID=${ADVERTISERS_DATABASE_ID}
+      - ENVIRONMENT=production
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+    restart: unless-stopped

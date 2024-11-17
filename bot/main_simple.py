@@ -8,7 +8,7 @@ import asyncio
 import dotenv
 from datetime import datetime
 import time
-from notion_service import NotionDealsClient as NotionService
+from bot.notion_service import NotionDealsClient as NotionService
 import json
 
 # Load environment variables
