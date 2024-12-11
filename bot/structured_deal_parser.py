@@ -16,9 +16,9 @@ try:
 except Exception as e:
     logger.error(f"Error loading .env file: {e}")
 
-class NotionDealsClient:
+class StructuredDealParser:
     def __init__(self, notion_token: str, database_id: str, kitchen_database_id: str):
-        logger.info("Initializing NotionDealsClient...")
+        logger.info("Initializing StructuredDealParser...")
         try:
             self.client = Client(auth=notion_token)
             # Use passed parameters instead of re-fetching from env
@@ -113,7 +113,7 @@ class NotionDealsClient:
                     properties=properties
                 )
                 logger.info(f"Successfully created Notion page for {deal['company_name']}")
-                results.append({"success": True, "deal": deal, "notion_page": new_page})
+                results.append({"success": True, "deal": deal, "parsed_page": new_page})
                 
             except Exception as e:
                 error_details = traceback.format_exc()

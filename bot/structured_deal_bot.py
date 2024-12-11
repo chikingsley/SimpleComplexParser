@@ -8,7 +8,7 @@ import asyncio
 import dotenv
 from datetime import datetime
 import time
-from bot.notion_service import NotionDealsClient as NotionService
+from bot.unstructured_deal_bot import UnstructuredDealParser as DealService
 import json
 
 # Load environment variables
@@ -90,7 +90,7 @@ class SimpleDealBot:
             logging.getLogger().setLevel(logging.DEBUG)
             
         self._validate_env()
-        self.notion_client = NotionService(
+        self.deal_parser = DealService(
             notion_token=os.getenv("NOTION_TOKEN"),
             database_id=os.getenv("OFFERS_DATABASE_ID"),
             kitchen_database_id=os.getenv("ADVERTISERS_DATABASE_ID")
@@ -174,144 +174,13 @@ class SimpleDealBot:
         Description: View complete formatting guide for bulk deal submissions.
         Shows exact format, field rules, and examples for submitting multiple deals.
         """
-        prompt_text = (
-            "*Prompt:*\n\n"
-            "Format deals as:\n"
-            "`[Region]-[Partner]-[GEO]-[Language]-[Source]-[Model]-[CPA]-[CRG]-[CPL]-[Funnels]-[CR]-[DeductionLimit]`\n\n"
-            "*Rules:*\n\n"
-            "1\\. *Region*: \"TIER1\" for AU, CA, US, \"LATAM\" for Latin America, \"NORDICS\" for DK, FI, SE, \"BALTICS\" for EE, LV, LT, \"TIER3\" for others\\.\n"
-            "2\\. *GEO*: Use ISO codes \\(e\\.g\\., US, FR\\); use `|` for multiple countries\\.\n"
-            "3\\. *Language*: Use \"Native\" if not specified\\.\n"
-            "4\\. *Source*: Standardize names \\(e\\.g\\., \"FB\" = Facebook\\)\\. Use `|` between multiple sources\\. Default to \"Facebook\" if none given\\.\n"
-            "5\\. *Model*: \"cpa\\_crg\" if CPA \\+ CRG given, \"cpa\" if only CPA, \"cpl\" if only CPL\\.\n"
-            "6\\. *CPA & CPL*: Whole numbers only; omit currency symbols\\.\n"
-            "7\\. *CRG*: Convert percentages to decimals \\(e\\.g\\., 10% = 0\\.10\\)\\.\n"
-            "8\\. *Funnels*: Exact names, separated by `|`\\.\n"
-            "9\\. *CR & Deduction Limit*: Use given values; `&` if missing\\. Treat \"until X% wrong number\" as deduction limit\\.\n\n"
-            "\\-\\-\\-\n\n"
-            "*Example:*\n"
-            "Input: `Partner: Acolyte GEO: UK CPA + CRG: 1250+13% Funnels: EvoPrimeX`\n"
-            "Output: `TIER1-Acolyte-UK-Native-Facebook-cpa_crg-1250-0.13-&-EvoPrimeX-&-0.05`"
-        )
-        
-        # Send message with markdown formatting
-        await update.message.reply_text(
-            prompt_text,
-            parse_mode='MarkdownV2'
-        )
-
-    def parse_deal_string(self, deal_string: str) -> tuple[Deal, str]:
-        """Parse a single deal string into a Deal object and return error message if any"""
         try:
-            # Validate basic string format
-            if not deal_string or not isinstance(deal_string, str):
-                return None, "Invalid deal string format"
-            
-            # Split the string on hyphens
-            fields = [f.strip() for f in deal_string.split("-")]
-            if len(fields) != 12:
-                return None, f"Expected 12 fields, got {len(fields)}"
-            
-            # Convert CPA/CPL to float if not "&"
-            try:
-                cpa = float(fields[6]) if fields[6] != "&" else None
-                cpl = float(fields[8]) if fields[8] != "&" else None
-            except ValueError:
-                return None, f"Invalid CPA '{fields[6]}' or CPL '{fields[8]}' value. Must be a number or '&'"
-            
-            # Convert CRG to float and handle percentage
-            crg = fields[7]
-            if crg != "&":
-                try:
-                    crg = float(crg)
-                    if crg > 1:  # Convert percentage to decimal
-                        crg = crg / 100
-                except ValueError:
-                    return None, f"Invalid CRG value '{fields[7]}'. Must be a number or '&'"
-            else:
-                crg = None
-                
-            # Handle funnels list
-            funnels = fields[9].split("|") if fields[9] != "&" else None
-            
-            # Convert deduction limit
-            deduction = fields[11]
-            if deduction != "&":
-                try:
-                    deduction = float(deduction)
-                    if deduction > 1:  # Convert percentage to decimal
-                        deduction = deduction / 100
-                except ValueError:
-                    return None, f"Invalid deduction limit '{fields[11]}'. Must be a number or '&'"
-            else:
-                deduction = None
-                
-            deal = Deal(
-                region=fields[0],
-                partner=fields[1],
-                geo=fields[2],
-                language=fields[3],
-                source=fields[4],
-                pricing_model=fields[5],
-                cpa=cpa,
-                crg=crg,
-                cpl=cpl,
-                funnels=funnels,
-                cr=fields[10],
-                deduction_limit=deduction
-            )
-            
-            if not deal.is_valid:
-                missing = []
-                if not all([deal.region, deal.partner, deal.geo, deal.language]):
-                    missing.extend([
-                        "region" if not deal.region else None,
-                        "partner" if not deal.partner else None,
-                        "geo" if not deal.geo else None,
-                        "language" if not deal.language else None
-                    ])
-                if not deal.source or deal.source == "&":
-                    missing.append("source")
-                if not deal.funnels or deal.funnels == ["&"]:
-                    missing.append("funnels")
-                    
-                missing = [m for m in missing if m]  # Remove None values
-                return None, f"Missing required fields: {', '.join(missing)}"
-            
-            return deal, None
-            
+            with open('/Users/simonpeacocks/Documents/GitHub/SimpleComplexParser/Deal Formatting.md', 'r') as file:
+                formatting_guide = file.read()
+            await update.message.reply_text(formatting_guide)
         except Exception as e:
-            logger.error(f"Error parsing deal string: {str(e)}")
-            logger.error(f"Problematic string: {deal_string}")
-            return None, f"Error parsing deal: {str(e)}"
-
-    def _prepare_notion_data(self, deals: List[Deal]) -> List[Dict]:
-        notion_deals = []
-        for deal in deals:
-            try:
-                notion_deal = {
-                    "company_name": deal.partner,
-                    "geo": deal.geo,
-                    "language": deal.language,
-                    "source": deal.source,
-                    "funnels": deal.funnels if isinstance(deal.funnels, list) else [deal.funnels] if deal.funnels else [],
-                    "cpa": deal.cpa,
-                    "crg": deal.crg,
-                    "cpl": deal.cpl,
-                    "deduction": deal.deduction_limit
-                }
-                notion_deals.append(notion_deal)
-            except Exception as e:
-                logger.error(f"Error preparing Notion data for deal: {str(e)}")
-                continue
-        return notion_deals
-
-    async def _rate_limit(self):
-        """Simple rate limiting for API calls"""
-        current_time = time.time()
-        if current_time - self.last_request_time < self.min_request_interval:
-            await asyncio.sleep(self.min_request_interval)
-        self.last_request_time = current_time
+            logger.error(f"Error reading Deal Formatting.md: {str(e)}")
+            await update.message.reply_text("❌ Sorry, I couldn't access the formatting guide at the moment.")
 
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle incoming messages containing deal strings."""
@@ -404,7 +273,7 @@ class SimpleDealBot:
             )
 
             # Prepare deals
-            notion_data = self._prepare_notion_data(valid_deals)
+            deal_data = self._prepare_deal_data(valid_deals)
 
             await processing_msg.edit_text(
                 "🔄 Processing Submission...\n\n"
@@ -444,7 +313,7 @@ class SimpleDealBot:
                 }
                 
                 # Submit each deal individually
-                result = self.notion_client.submit_deals([deal_dict])
+                result = self.deal_parser.submit_deals([deal_dict])
 
             completion_time = time.time() - start_time
 
@@ -454,7 +323,7 @@ class SimpleDealBot:
             summary += f"• Total Deals: {len(deal_strings)}\n"
             summary += f"• Successfully Processed: {len(valid_deals)}\n"
             summary += f"• Failed to Process: {len(invalid_deals)}\n"
-            summary += "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            summary += "━━━━━━━━━━━━━━━━━━━━\n\n"
 
             # Only add failed deals and their errors
             if invalid_deals:
@@ -470,6 +339,119 @@ class SimpleDealBot:
                 f"Error details: {str(e)}\n"
                 "Please check the format and try again."
             )
+
+    def parse_deal_string(self, deal_string: str) -> tuple[Deal, str]:
+        """Parse a single deal string into a Deal object and return error message if any"""
+        try:
+            # Validate basic string format
+            if not deal_string or not isinstance(deal_string, str):
+                return None, "Invalid deal string format"
+            
+            # Split the string on hyphens
+            fields = [f.strip() for f in deal_string.split("-")]
+            if len(fields) != 12:
+                return None, f"Expected 12 fields, got {len(fields)}"
+            
+            # Convert CPA/CPL to float if not "&"
+            try:
+                cpa = float(fields[6]) if fields[6] != "&" else None
+                cpl = float(fields[8]) if fields[8] != "&" else None
+            except ValueError:
+                return None, f"Invalid CPA '{fields[6]}' or CPL '{fields[8]}' value. Must be a number or '&'"
+            
+            # Convert CRG to float and handle percentage
+            crg = fields[7]
+            if crg != "&":
+                try:
+                    crg = float(crg)
+                    if crg > 1:  # Convert percentage to decimal
+                        crg = crg / 100
+                except ValueError:
+                    return None, f"Invalid CRG value '{fields[7]}'. Must be a number or '&'"
+            else:
+                crg = None
+                
+            # Handle funnels list
+            funnels = fields[9].split("|") if fields[9] != "&" else None
+            
+            # Convert deduction limit
+            deduction = fields[11]
+            if deduction != "&":
+                try:
+                    deduction = float(deduction)
+                    if deduction > 1:  # Convert percentage to decimal
+                        deduction = deduction / 100
+                except ValueError:
+                    return None, f"Invalid deduction limit '{fields[11]}'. Must be a number or '&'"
+            else:
+                deduction = None
+                
+            deal = Deal(
+                region=fields[0],
+                partner=fields[1],
+                geo=fields[2],
+                language=fields[3],
+                source=fields[4],
+                pricing_model=fields[5],
+                cpa=cpa,
+                crg=crg,
+                cpl=cpl,
+                funnels=funnels,
+                cr=fields[10],
+                deduction_limit=deduction
+            )
+            
+            if not deal.is_valid:
+                missing = []
+                if not all([deal.region, deal.partner, deal.geo, deal.language]):
+                    missing.extend([
+                        "region" if not deal.region else None,
+                        "partner" if not deal.partner else None,
+                        "geo" if not deal.geo else None,
+                        "language" if not deal.language else None
+                    ])
+                if not deal.source or deal.source == "&":
+                    missing.append("source")
+                if not deal.funnels or deal.funnels == ["&"]:
+                    missing.append("funnels")
+                    
+                missing = [m for m in missing if m]  # Remove None values
+                return None, f"Missing required fields: {', '.join(missing)}"
+            
+            return deal, None
+            
+        except Exception as e:
+            logger.error(f"Error parsing deal string: {str(e)}")
+            logger.error(f"Problematic string: {deal_string}")
+            return None, f"Error parsing deal: {str(e)}"
+
+    def _prepare_deal_data(self, deals: List[Deal]) -> List[Dict]:
+        """Prepare deals for submission"""
+        formatted_deals = []
+        for deal in deals:
+            if deal is not None:
+                formatted_deal = {
+                    "company_name": deal.partner,
+                    "geo": deal.geo,
+                    "language": deal.language,
+                    "source": deal.source,
+                    "funnels": deal.funnels if isinstance(deal.funnels, list) else [deal.funnels] if deal.funnels else [],
+                    "cpa": deal.cpa,
+                    "crg": deal.crg,
+                    "cpl": deal.cpl,
+                    "deduction": deal.deduction_limit
+                }
+                formatted_deals.append(formatted_deal)
+            else:
+                logger.warning("Skipping None deal")
+        return formatted_deals
+
+    async def _rate_limit(self):
+        """Simple rate limiting for API calls"""
+        current_time = time.time()
+        if current_time - self.last_request_time < self.min_request_interval:
+            await asyncio.sleep(self.min_request_interval)
+        self.last_request_time = current_time
 
     def run(self):
         """Start the bot."""

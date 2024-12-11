@@ -1,5 +1,5 @@
 import dotenv
-from notion_client import Client as NotionClient  # Fix: Import from notion_client instead of notion_god
+from notion_client import Client
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 import logging
@@ -17,14 +17,14 @@ try:
 except Exception as e:
     logger.error(f"Error loading .env file: {e}")
 
-class NotionDealsClient:
+class UnstructuredDealParser:
     def __init__(self, notion_token: str, database_id: str, kitchen_database_id: str, debug: bool = False):
-        logger.info("Initializing NotionDealsClient...")
+        logger.info("Initializing UnstructuredDealParser...")
         try:
             if debug:
                 logger.setLevel(logging.DEBUG)
             
-            self.client = NotionClient(auth=notion_token)
+            self.client = Client(auth=notion_token)
             self.database_id = database_id
             self.kitchen_database_id = kitchen_database_id
             
@@ -122,7 +122,7 @@ class NotionDealsClient:
                     properties=properties
                 )
                 logger.info(f"Successfully created Notion page for {deal['company_name']}")
-                results.append({"success": True, "deal": deal, "notion_page": new_page})
+                results.append({"success": True, "deal": deal, "parsed_page": new_page})
                 
             except Exception as e:
                 error_details = traceback.format_exc()

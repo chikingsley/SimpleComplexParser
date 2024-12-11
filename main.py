@@ -4,8 +4,8 @@ import os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler, ConversationHandler
 from bot.router import DealRouter
-from bot.main_simple import SimpleDealBot
-from bot.main_complex import ComplexDealBot
+from bot.structured_deal_bot import SimpleDealBot
+from bot.unstructured_deal_bot import ComplexDealBot
 from dotenv import load_dotenv
 
 load_dotenv()

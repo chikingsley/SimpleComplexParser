@@ -4,7 +4,7 @@ from bot.client import DealParser, FieldValidator
 import logging
 import time
 from typing import Any
-from .notion_client import NotionDealsClient
+from .structured_deal_parser import StructuredDealParser
 import os
 import re
 import asyncio
@@ -394,7 +394,7 @@ class MessageHandler:
             if not all([notion_token, offers_db_id, kitchen_db_id]):
                 raise ValueError("Missing required Notion environment variables")
             
-            notion_client = NotionDealsClient(
+            deal_parser = StructuredDealParser(
                 notion_token=notion_token,
                 database_id=offers_db_id,
                 kitchen_database_id=kitchen_db_id
@@ -409,8 +409,8 @@ class MessageHandler:
             )
             logger.info("Submitting deals to Notion...")
 
-            # Submit deals to Notion
-            results = notion_client.submit_deals(approved_deals)
+            # Submit deals
+            results = deal_parser.submit_deals(approved_deals)
 
             # Calculate completion time
             completion_time = time.time() - start_time
