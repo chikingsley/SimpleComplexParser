@@ -8,7 +8,7 @@ import asyncio
 import dotenv
 from datetime import datetime
 import time
-from bot.unstructured_deal_bot import UnstructuredDealParser as DealService
+from bot.structured_deal_parser import StructuredDealParser as DealService
 import json
 
 # Load environment variables
@@ -304,16 +304,18 @@ class SimpleDealBot:
                     'company_name': deal.partner,
                     'geo': deal.geo,
                     'language': deal.language,
-                    'source': deal.source,
+                    'sources': deal.source,
                     'funnels': deal.funnels,
-                    'cpa': deal.cpa,
-                    'crg': deal.crg,
-                    'cpl': deal.cpl,
+                    'cpa_buying': deal.cpa,
+                    'crg_buying': deal.crg,
+                    'cpl_buying': deal.cpl,
                     'deduction': deal.deduction_limit
                 }
                 
                 # Submit each deal individually
+                logger.debug(f"Attempting to submit deal: {deal_dict}")
                 result = self.deal_parser.submit_deals([deal_dict])
+                logger.debug(f"Submission result: {result}")
 
             completion_time = time.time() - start_time
 
@@ -323,7 +325,7 @@ class SimpleDealBot:
             summary += f"• Total Deals: {len(deal_strings)}\n"
             summary += f"• Successfully Processed: {len(valid_deals)}\n"
             summary += f"• Failed to Process: {len(invalid_deals)}\n"
-            summary += "━━━━━━━━━━━━━━━━━━━━\n\n"
+            summary += "━━━━━━━━━━━━━━\n\n"
 
             # Only add failed deals and their errors
             if invalid_deals:

@@ -47,7 +47,10 @@ class StructuredDealParser:
                 # Split multi-value fields
                 languages = [lang.strip() for lang in str(deal["language"]).split("|")]
                 sources = [source.strip() for source in str(deal["sources"]).replace(",", "|").split("|")]
-                funnels = [funnel.strip() for funnel in str(deal["funnels"]).split(",")]
+                
+                # Clean up funnels - remove list formatting artifacts and split
+                funnels_str = str(deal["funnels"]).replace("[", "").replace("]", "").replace("'", "")
+                funnels = [funnel.strip() for funnel in funnels_str.split(",")]
                 
                 logger.info(f"Processed fields - Languages: {languages}, Sources: {sources}, Funnels: {funnels}")
                 
@@ -84,13 +87,28 @@ class StructuredDealParser:
                         "number": float(deal["cpl_buying"]) if deal["cpl_buying"] else None
                     },
                     "CPA | Network | Selling": {
-                        "number": float(deal["cpa_buying"]) + 100 if deal["cpa_buying"] else None
+                        "number": float(deal["cpa_buying"]) + 50 if deal["cpa_buying"] else None
                     },
                     "CRG | Network | Selling": {
-                        "number": float(deal["crg_buying"]) + 0.01 if deal["crg_buying"] else None
+                        "number": (float(deal["crg_buying"]) + 0.01 
+                                 if deal["crg_buying"] and float(deal["crg_buying"]) > 0.1 
+                                 else float(deal["crg_buying"])) 
+                                 if deal["crg_buying"] else None
                     },
                     "CPL | Network | Selling": {  
                         "number": float(deal["cpl_buying"]) + 5 if deal["cpl_buying"] else None
+                    },
+                    "CPA | Brand | Selling": {
+                        "number": float(deal["cpa_buying"]) + 100 if deal["cpa_buying"] else None
+                    },
+                    "CRG | Brand | Selling": {
+                        "number": (float(deal["crg_buying"]) + 0.01 
+                                 if deal["crg_buying"] and float(deal["crg_buying"]) > 0.1 
+                                 else float(deal["crg_buying"])) 
+                                 if deal["crg_buying"] else None
+                    },
+                    "CPL | Brand | Selling": {
+                        "number": float(deal["cpl_buying"]) + 7 if deal["cpl_buying"] else None
                     },
                     "Deduction %": {
                         "number": float(deal["deduction"]) if deal["deduction"] else None
