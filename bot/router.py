@@ -23,43 +23,25 @@ class FormatDetectionResult:
 class DealRouter:
     """Enhanced DealRouter with format detection and state management"""
     
-    # Structured format patterns (data.md)
+    # Simple patterns to detect structured format
     STRUCTURED_PATTERNS = [
-        r'^(?:TIER[123]|NORDICS|LATAM)-[\w]+-[A-Z]{2}(?:\|[A-Z]{2})*-[\w\s]+?-[\w\s|]+?-cpa(?:_crg)?-\d+(?:\.\d+)?-[\d.]+?-[&\w\s|]+?-[&\w\s]+?-[&\w\s]+$',
+        r'^(?:TIER[123]|NORDICS|LATAM|BALTICS)-',  # Starts with region and dash
+        r'^[^-]+-[^-]+-[^-]+-[^-]+-[^-]+-[^-]+-[^-]+-[^-]+-[^-]+-[^-]+-[^-]+'  # Has 11 parts connected by dashes
     ]
     
-    # Unstructured format patterns (data copy.md)
-    UNSTRUCTURED_PATTERNS = [
-        r'(?:Partner|GEO):\s*([^\n]+)',
-        r'Source:\s*([^\n]+)',
-        r'CPA\s*\+\s*crg\s*:\s*(\d+)\$\s*\+\s*(\d+)%',
-        r'Landing Page:\s*([^\n]+)',
-    ]
-    
-    # Deal indicators for validation
-    DEAL_INDICATORS = {
-        'strong': [
-            r"\d+\s*\+\s*\d+%",          # 1000+10%
-            r"\$?\s*\d+\s*\+\s*\d+%",    # $1000+10%
-            r"(?:Price|CPA|CPL)\s*:?\s*[\d.]+",
-            r"(?:Partner|Company)\s*:",
-            r"(?:GEO|Country)\s*:"
-        ],
-        'supporting': [
-            r"Source\s*:",
-            r"Funnel(?:s)?\s*:",
-            r"Landing Page\s*:",
-            r"model\s*:",
-            r"[A-Z]{2}\s*(?:native|eng|fr|es|de)",
-            r"(?:FB|Facebook|Google|SEO|Taboola|Native)\s+[Tt]raffic"
-        ]
-    }
+    # Complex format always starts with "Partner: "
+    COMPLEX_START_PATTERN = r'^Partner:\s*([^\n]+)'
 
     @classmethod
     def detect_format(cls, text: str) -> FormatDetectionResult:
-        """Enhanced format detection with confidence scoring"""
-        lines = [line.strip() for line in text.split('\n') if line.strip()]
-        
+        """Simple format detection based on message structure"""
+        if not text:
+            return FormatDetectionResult(
+                format_type=DataFormat.UNKNOWN,
+                confidence=0.0,
+                sample_matches=[]
+            )
+            
         # Skip processing messages
         if "Deal Parsing Progress" in text or "Processing deal" in text:
             return FormatDetectionResult(
@@ -67,59 +49,44 @@ class DealRouter:
                 confidence=0.0,
                 sample_matches=[]
             )
-        
-        # Match patterns
-        structured_matches = []
-        unstructured_matches = []
-        
-        for line in lines:
-            # Check structured format
-            for pattern in cls.STRUCTURED_PATTERNS:
-                if re.match(pattern, line, re.IGNORECASE):
-                    structured_matches.append(line)
-                    break
-                    
-        # Check unstructured format
-        text_chunk = '\n'.join(lines)
-        for pattern in cls.UNSTRUCTURED_PATTERNS:
-            matches = re.findall(pattern, text_chunk, re.IGNORECASE | re.MULTILINE)
-            unstructured_matches.extend([m if isinstance(m, str) else m[0] for m in matches])
-        
-        # Check deal indicators
-        strong_matches = sum(1 for pattern in cls.DEAL_INDICATORS['strong']
-                           if re.search(pattern, text_chunk, re.IGNORECASE))
-        supporting_matches = sum(1 for pattern in cls.DEAL_INDICATORS['supporting']
-                               if re.search(pattern, text_chunk, re.IGNORECASE))
-        
-        # Calculate confidence scores
-        structured_score = len(structured_matches) / len(lines) if lines else 0
-        unstructured_score = len(unstructured_matches) / (len(lines) * 2) if lines else 0
-        indicator_score = (strong_matches + (supporting_matches * 0.5)) / (
-            len(cls.DEAL_INDICATORS['strong']) + (len(cls.DEAL_INDICATORS['supporting']) * 0.5)
-        )
-        
-        logger.debug(f"Format detection scores - Structured: {structured_score:.2f}, "
-                    f"Unstructured: {unstructured_score:.2f}, Indicators: {indicator_score:.2f}")
-        
-        # Determine format
-        if structured_score > 0.7:
-            return FormatDetectionResult(
-                format_type=DataFormat.STRUCTURED,
-                confidence=structured_score + (indicator_score * 0.2),
-                sample_matches=structured_matches[:5]
-            )
-        elif (unstructured_score > 0.3 and indicator_score > 0.3) or indicator_score > 0.5:
-            return FormatDetectionResult(
-                format_type=DataFormat.UNSTRUCTURED,
-                confidence=unstructured_score + (indicator_score * 0.3),
-                sample_matches=unstructured_matches[:5]
-            )
-        else:
+            
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        if not lines:
             return FormatDetectionResult(
                 format_type=DataFormat.UNKNOWN,
                 confidence=0.0,
                 sample_matches=[]
             )
+            
+        # Check if it's a complex format (starts with Partner:)
+        if re.match(cls.COMPLEX_START_PATTERN, lines[0], re.IGNORECASE):
+            logger.debug("Detected complex format (starts with Partner:)")
+            return FormatDetectionResult(
+                format_type=DataFormat.UNSTRUCTURED,
+                confidence=1.0,
+                sample_matches=[lines[0]]
+            )
+            
+        # Check if all lines match structured format
+        structured_matches = []
+        for line in lines:
+            if any(re.match(pattern, line, re.IGNORECASE) for pattern in cls.STRUCTURED_PATTERNS):
+                structured_matches.append(line)
+        
+        if structured_matches and len(structured_matches) == len(lines):
+            logger.debug("Detected structured format (matches dash pattern)")
+            return FormatDetectionResult(
+                format_type=DataFormat.STRUCTURED,
+                confidence=1.0,
+                sample_matches=structured_matches[:5]
+            )
+            
+        # If neither format matches
+        return FormatDetectionResult(
+            format_type=DataFormat.UNKNOWN,
+            confidence=0.0,
+            sample_matches=[]
+        )
 
     @staticmethod
     async def route_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Tuple[str, Optional[str]]:
@@ -128,21 +95,7 @@ class DealRouter:
         if update.callback_query:
             logger.info(f"Processing callback query: {update.callback_query.data}")
             
-            # Get original message if it exists
-            original_message = update.callback_query.message.reply_to_message
-            
-            # If we have original message text, detect its format
-            if original_message and original_message.text:
-                detection_result = DealRouter.detect_format(original_message.text)
-                logger.info(f"Callback original message format: {detection_result.format_type}")
-                
-                if detection_result.format_type == DataFormat.STRUCTURED:
-                    return 'simple', original_message.text
-                elif detection_result.format_type == DataFormat.UNSTRUCTURED:
-                    return 'complex', original_message.text
-            
-            # If no original message or couldn't detect format, default to complex
-            logger.info("Routing callback to complex flow")
+            # Always route callbacks to complex handler for better compatibility
             return 'complex', None
         
         # For new messages
@@ -154,6 +107,12 @@ class DealRouter:
         if not text:
             logger.warning("Empty message text")
             return 'invalid', None
+
+        # Check if we're in edit mode by looking at user data
+        user_data = context.user_data
+        if user_data and user_data.get('editing_state'):
+            logger.info("User is in edit mode, routing to complex flow")
+            return 'complex', text
         
         # Detect format for new messages
         detection_result = DealRouter.detect_format(text)

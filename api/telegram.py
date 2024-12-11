@@ -3,8 +3,10 @@ from telegram.ext import (
     Application, 
     CommandHandler, 
     MessageHandler, 
+    CallbackQueryHandler,
     filters, 
-    CallbackContext
+    CallbackContext,
+    ContextTypes
 )
 from main import MainBot
 import os
@@ -38,10 +40,26 @@ async def startup_event():
         # Add handlers
         application.add_handler(CommandHandler("start", bot.simple_bot.start))
         application.add_handler(CommandHandler("help", bot.simple_bot.help_command))
+        
+        # Add callback query handler for button clicks
+        application.add_handler(CallbackQueryHandler(bot.handle_message))
+        
+        # Add message handler for text messages
         application.add_handler(MessageHandler(
             filters.TEXT | filters.COMMAND | filters.StatusUpdate.ALL, 
             bot.handle_message
         ))
+        
+        # Add error handler
+        async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+            logger.error(f"Exception while handling an update: {context.error}")
+            if isinstance(update, Update):
+                if update.callback_query:
+                    await update.callback_query.answer(
+                        text="An error occurred while processing your request."
+                    )
+        
+        application.add_error_handler(error_handler)
         
         # Initialize and start the application
         await application.initialize()
@@ -89,19 +107,8 @@ async def telegram_webhook(request: Request):
         update = Update.de_json(update_data, application.bot)
         logger.info(f"Created Update object: {update}")
         
-        # Handle update based on type
-        if update.callback_query:
-            logger.debug("Processing callback query")
-            # Route to appropriate bot based on original message
-            flow_type, text = await bot.router.route_message(update, CallbackContext(application))
-            if flow_type == 'simple':
-                await bot.simple_bot.handle_callback(update, CallbackContext(application))
-            else:
-                await bot.complex_bot.handle_callback(update, CallbackContext(application))
-        else:
-            # Process regular messages through application
-            logger.debug("Processing regular message")
-            await application.process_update(update)
+        # Process all updates through the application
+        await application.process_update(update)
         
         logger.info("Update processed successfully")
         return Response(status_code=200, content="ok")

@@ -190,10 +190,11 @@ class MessageHandler:
                 r"\d+\s*\+\s*\d+%",          # 1000+10%
                 r"\$?\s*\d+\s*\+\s*\d+%",    # $1000+10%
                 r"(?:Price|CPA|CPL)\s*:?\s*[\d.]+", # Price: 1000, CPA: 1000, CPL: 15
-                
+                r"\d+\s*[A-Za-z]{2}-[a-z]{2}", # e.g., "1300 BE-en"
                 # Deal headers
                 r"(?:Partner|Company)\s*:",   # Partner: or Company:
                 r"(?:GEO|Country)\s*:",       # GEO: or Country:
+                r"^[A-Z]{2}-[a-z]{2}\s+\d+", # e.g., "BE-en 1300"
             ]
             
             supporting_indicators = [
@@ -202,12 +203,13 @@ class MessageHandler:
                 r"Funnel(?:s)?\s*:",
                 r"Landing Page\s*:",
                 r"model\s*:",
-                
-                # Country codes
+                r"(?:FB|Facebook|Google|SEO|Taboola|Native|GG)\s*(?:[Tt]raffic)?",
+                # Country codes with language
                 r"[A-Z]{2}\s*(?:native|eng|fr|es|de)",  # e.g., "UK eng" or "FR native"
-                
-                # Traffic sources
-                r"(?:FB|Facebook|Google|SEO|Taboola|Native)\s+[Tt]raffic",
+                r"[A-Z]{2}-[a-z]{2}",  # e.g., "BE-en"
+                # Common deal elements
+                r"Profit",
+                r"Until\s+\d+%\s+wrong\s+number"
             ]
             
             # Count strong and supporting indicators
@@ -216,8 +218,8 @@ class MessageHandler:
             supporting_matches = sum(1 for pattern in supporting_indicators 
                                   if re.search(pattern, message_text, re.IGNORECASE))
             
-            # Require at least one strong indicator and one supporting indicator
-            is_deal = strong_matches >= 1 and supporting_matches >= 1
+            # Require at least one strong indicator OR two supporting indicators
+            is_deal = strong_matches >= 1 or supporting_matches >= 2
             
             # Also check it's not just a progress message
             if "Deal Parsing Progress" in message_text or "Processing deal" in message_text:
@@ -474,16 +476,18 @@ class MessageHandler:
         user_id = update.effective_user.id
         
         try:
-            await query.answer()
+            logger.info(f"Processing callback query: {query.data} from user {user_id}")
+            await query.answer()  # Acknowledge the button click
             
             # Handle Notion submission
             if query.data == "submit_notion":
-                logger.info("Notion submission button clicked")
+                logger.info("Starting Notion submission process")
                 await self._submit_to_notion(update, context)
                 return
                 
             # Handle final action buttons
             if query.data.startswith('final_'):
+                logger.info(f"Processing final action: {query.data}")
                 action = query.data.split('_')[1]
                 
                 if action == 'discard':
@@ -528,14 +532,19 @@ class MessageHandler:
             action = parts[0]
             index = int(parts[-1])  # Last part is always the index
             
+            logger.info(f"Processing action: {action} for index: {index}")
+            
             user_data = self.current_deals.get(user_id)
             if not user_data:
+                logger.error(f"No deals found for user {user_id}")
+                await query.answer("No active deals found. Please submit your deals again.")
                 return
                 
             total_deals = len(user_data['deals'])
             current_deal = user_data['deals'][index]
             
             if action == 'edit':
+                logger.info(f"Showing edit options for deal {index}")
                 # Show edit options keyboard
                 keyboard = [
                     [
@@ -597,6 +606,9 @@ class MessageHandler:
                     'deal_index': index,
                     'message': query.message  # Store the original message
                 }
+                
+                # Store editing state in context.user_data for router
+                context.user_data['editing_state'] = True
                 
                 # Show edit prompt
                 await query.edit_message_text(
@@ -779,6 +791,7 @@ class MessageHandler:
 
             # Clear editing state
             del self.editing_state[user_id]
+            context.user_data.pop('editing_state', None)  # Clear router editing state
 
         except Exception as e:
             logger.error(f"Error handling edit input: {str(e)}")
@@ -788,3 +801,4 @@ class MessageHandler:
             # Clean up editing state on error
             if user_id in self.editing_state:
                 del self.editing_state[user_id]
+            context.user_data.pop('editing_state', None)  # Clear router editing state on error

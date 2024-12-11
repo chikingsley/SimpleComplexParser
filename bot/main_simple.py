@@ -454,7 +454,7 @@ class SimpleDealBot:
             summary += f"• Total Deals: {len(deal_strings)}\n"
             summary += f"• Successfully Processed: {len(valid_deals)}\n"
             summary += f"• Failed to Process: {len(invalid_deals)}\n"
-            summary += "━━━━━━��━━━━━━━━��\n\n"
+            summary += "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
 
             # Only add failed deals and their errors
             if invalid_deals:

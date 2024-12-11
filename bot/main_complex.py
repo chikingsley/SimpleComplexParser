@@ -8,7 +8,8 @@ from telegram.ext import (
     MessageHandler as TelegramMessageHandler, 
     CallbackQueryHandler, 
     filters,
-    ContextTypes
+    ContextTypes,
+    ConversationHandler
 )
 from bot.message import MessageHandler
 from dotenv import load_dotenv
@@ -57,6 +58,14 @@ class ComplexDealBot:
             "Source: Facebook"
         )
         await update.message.reply_text(help_text)
+
+    # Add EDIT state constant
+    EDIT = 1
+
+    async def _handle_edit_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle text input after edit button click"""
+        await self.message_handler._handle_edit_input(update, context)
+        return ConversationHandler.END
 
 def main():
     """Start the bot."""
