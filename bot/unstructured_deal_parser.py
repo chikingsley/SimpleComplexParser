@@ -104,10 +104,7 @@ class UnstructuredDealParser:
                         "number": float(deal.get('cpa', deal.get('cpa_buying'))) + 100 if deal.get('cpa', deal.get('cpa_buying')) else None
                     },
                     "CRG | Brand | Selling": {
-                        "number": (float(deal.get('crg', deal.get('crg_buying'))) + 0.01 
-                                 if deal.get('crg', deal.get('crg_buying')) and float(deal.get('crg', deal.get('crg_buying'))) > 0.1 
-                                 else float(deal.get('crg', deal.get('crg_buying')))) 
-                                 if deal.get('crg', deal.get('crg_buying')) else None
+                        "number": float(deal.get('crg', deal.get('crg_buying'))) if deal.get('crg', deal.get('crg_buying')) else None
                     },
                     "CPL | Brand | Selling": {
                         "number": float(deal.get('cpl', deal.get('cpl_buying'))) + 7 if deal.get('cpl', deal.get('cpl_buying')) else None

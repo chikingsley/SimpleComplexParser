@@ -125,6 +125,81 @@ docker-compose up --build
 - Monitor Docker logs for potential issues
 - Use localtunnel for easy webhook testing
 
+## Deal Submission Guide
+
+The bot accepts deals in two formats:
+
+### 1. Structured Format (Simple)
+Use this format for quick submissions with a standardized structure:
+```
+REGION-PARTNER-GEO-LANGUAGE-SOURCE-PRICING_MODEL-CPA-CRG-CPL-FUNNELS-CR-DEDUCTION_LIMIT
+```
+
+Example:
+```
+TIER1-PartnerName-SG-en|id-Facebook-CPA-1.5-2.0-3.0-funnel1|funnel2-10%-0.5
+```
+
+Required Fields (in order):
+- REGION: TIER1, TIER2, TIER3, NORDICS, LATAM, or BALTICS
+- PARTNER: Company name
+- GEO: Country code
+- LANGUAGE: Language codes (use | for multiple)
+- SOURCE: Traffic source
+- PRICING_MODEL: CPA, CPL, or CRG
+- CPA: Cost per action (if applicable)
+- CRG: Cost per registration (if applicable)
+- CPL: Cost per lead (if applicable)
+- FUNNELS: List of funnels (use | for multiple)
+- CR: Conversion rate
+- DEDUCTION_LIMIT: Maximum deduction allowed
+
+### 2. Unstructured Format (Complex)
+Use this format for more detailed submissions with flexible structure:
+
+```
+Partner: [partner name]
+Region: [region]
+GEO: [country code]
+Language: [language codes]
+Source: [traffic source]
+Pricing Model: [model]
+[Additional fields based on pricing model]
+```
+
+Example:
+```
+Partner: PartnerName
+Region: TIER1
+GEO: SG
+Language: en, id
+Source: Facebook
+Pricing Model: CPA
+CPA: 1.5
+CR: 10%
+Funnels: funnel1, funnel2
+Deduction Limit: 0.5
+```
+
+### Shared Fields (Required for Both Formats)
+- Partner/Company Name
+- Region
+- GEO (Country Code)
+- Language
+- Traffic Source
+- Pricing Model
+
+### Tips
+- Use pipe (|) in structured format and comma (,) in unstructured format for multiple values
+- All monetary values should be in USD
+- CR should be expressed as a percentage
+- Language codes should follow ISO standards (e.g., en, es, id)
+
+### Commands
+- `/start` - Initialize the bot and get basic instructions
+- `/help` - View required fields and pricing model specifications
+- `/prompt` - Get detailed formatting guide for submissions
+
 ## Future Improvements
 
 - Implement more robust error handling

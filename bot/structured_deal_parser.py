@@ -102,10 +102,7 @@ class StructuredDealParser:
                         "number": float(deal["cpa_buying"]) + 100 if deal["cpa_buying"] else None
                     },
                     "CRG | Brand | Selling": {
-                        "number": (float(deal["crg_buying"]) + 0.01 
-                                 if deal["crg_buying"] and float(deal["crg_buying"]) > 0.1 
-                                 else float(deal["crg_buying"])) 
-                                 if deal["crg_buying"] else None
+                        "number": float(deal["crg_buying"]) if deal["crg_buying"] else None
                     },
                     "CPL | Brand | Selling": {
                         "number": float(deal["cpl_buying"]) + 7 if deal["cpl_buying"] else None
